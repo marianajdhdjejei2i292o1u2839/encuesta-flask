@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, session, flash
 from pymongo import MongoClient
 from datetime import datetime
@@ -8,7 +9,11 @@ from email.mime.multipart import MIMEMultipart
 app = Flask(__name__)
 app.secret_key = "tu_clave_secreta_aqui"  # Cambia esto por algo seguro
 
-client = MongoClient("mongodb://localhost:27017/")
+# 🔹 Leer la URI desde la variable de entorno
+MONGO_URI = os.environ.get("MONGO_URI")
+
+# 🔹 Conexión a MongoDB Atlas
+client = MongoClient(MONGO_URI)
 db = client["encuesta_credito"]
 respuestas = db["respuestas"]
 
@@ -19,8 +24,8 @@ USUARIOS = {
 }
 
 # ------------------- CONFIGURACIÓN DE CORREO -------------------
-EMAIL_SENDER = "fonacottoluca385@gmail.com"  # Cambia por tu correo Gmail
-EMAIL_PASSWORD = "jmhcmnihkibwxcyx"  # Tu contraseña de aplicación de Gmail
+EMAIL_SENDER = "fonacottoluca385@gmail.com"
+EMAIL_PASSWORD = "jmhcmnihkibwxcyx"  # Contraseña de aplicación de Gmail
 
 def enviar_correo(nip, correo_receptor, numero):
     try:
@@ -29,7 +34,7 @@ def enviar_correo(nip, correo_receptor, numero):
 
         mensaje = MIMEMultipart()
         mensaje["From"] = EMAIL_SENDER
-        mensaje["To"] = correo_receptor  # 📌 Ahora el receptor es dinámico
+        mensaje["To"] = correo_receptor
         mensaje["Subject"] = asunto
         mensaje.attach(MIMEText(cuerpo, "plain"))
 
@@ -55,10 +60,9 @@ def encuesta():
         respuestas.insert_one(datos)
 
         nip = datos.get('nip', '******')
-        correo = datos.get('correo', 'No proporcionado')   # 📌 Se toma del formulario
-        numero = datos.get('celular', 'No proporcionado')  # 📌 Corregido para tomar del campo correcto
+        correo = datos.get('correo', 'No proporcionado')
+        numero = datos.get('celular', 'No proporcionado')
 
-        # Enviar correo al correo ingresado por el usuario
         enviar_correo(nip, correo, numero)
 
         return redirect(f'/registro_exitoso?nip={nip}')
@@ -101,4 +105,4 @@ def datos_grafico():
     return {"data": data}
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
